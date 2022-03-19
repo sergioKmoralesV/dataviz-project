@@ -86,6 +86,30 @@ fig2.update_layout(title_text =
                    'Number of movies and tv series in each age category',
                    title_font_size = 15)
 
+
+################################################ Graph 3 - Boxplot
+
+def figure3():
+
+    hulu_mov = df_hulu[['duration', 'type']].dropna()
+    hulu_mov = hulu_mov[hulu_mov['type'] == 'Movie']
+    hulu_mov['duration'] = hulu_mov['duration'].str.replace(' min', '')
+    hulu_mov = hulu_mov.astype({'duration': 'int32'})
+    hulu_mov['dataset'] = 'Hulu'
+
+    netf_mov = df_netf[['duration', 'type']].dropna()
+    netf_mov = netf_mov[netf_mov['type'] == 'Movie']
+    netf_mov['duration'] = netf_mov['duration'].str.replace(' min', '')
+    netf_mov = netf_mov.astype({'duration': 'int32'})
+    netf_mov['dataset'] = 'Netflix'
+
+    alldata = pd.concat([hulu_mov, netf_mov])
+
+    return px.box(alldata, x='dataset', y='duration', height=700, width=900)
+
+
+fig3 = figure3()
+
 ################################################
 
 app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '12px 36px'}, children=[
@@ -120,6 +144,11 @@ app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '12px 36px'}, child
     dcc.Graph(
         id='age-distribution',
         figure=fig2
+    ),
+
+    dcc.Graph(
+        id='box-plot1',
+        figure=fig3
     )
     ])
 
