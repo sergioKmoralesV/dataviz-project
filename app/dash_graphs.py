@@ -16,6 +16,8 @@ df_3 = pd.read_csv('../data/MoviesOnStreamingPlatforms.csv')
 df_joined = pd.concat([df_hulu, df_netf])
 g_by_release = df_joined.groupby(['release_year'])
 
+
+############################################## Graph 1
 @app.callback(
     Output('content-release-date', 'figure'),
     Input('start_y', 'value'),
@@ -47,17 +49,44 @@ def update_figure(start_year, end_year):
         )])
 
     fig.update_layout(
-        title='Hulu and Netflix releases of movies and tv shows by year',
+        title_text='Hulu and Netflix releases of movies and tv shows by year',
         xaxis_title='Year',
         yaxis_title='Count',
         height=600,
-        title_font_family='Lato')
+        title_font_family='Lato',
+        title_font_size = 18)
 
     fig.update_layout(transition_duration=500)
 
     return fig
 
 
+############################################## Graph 2
+
+df_3mod = df_3.dropna(subset=['Age'])
+g_by_age = df_3mod.groupby(['Age']).size().reset_index(name='count').sort_values('count')
+g_by_age.reset_index(drop=True, inplace=True)
+
+fig2 = go.Figure()
+
+fig2.add_trace(go.Scatter(x = g_by_age['count'], 
+                          y = g_by_age['Age'],
+                          mode = 'markers',
+                          marker_color ='darkblue',
+                          marker_size  = 10))
+
+for i in range(0, len(g_by_age)):
+    fig2.add_shape(type='line',
+        x0 = 0, y0 = i,
+        x1 = g_by_age['count'][i],
+        y1 = i,
+        line=dict(color='crimson', width = 3))
+
+fig2.update_layout(title_text = 
+                   'Number of movies and tv series in each age category',
+                   title_font_size = 15)
+
+################################################
 
 app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '12px 36px'}, children=[
     html.H1(children='Hulu and Netflix Movies and TV Shows'),
@@ -86,19 +115,20 @@ app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '12px 36px'}, child
         }),
     dcc.Graph(
         id='content-release-date'
+    ),
+
+    dcc.Graph(
+        id='age-distribution',
+        figure=fig2
     )
     ])
-
-
-
-
 
 
 if __name__ == '__main__':
     app.run_server(debug=True)
 
 
-# [1] - number of movies + tv series per platform - [callback with date]
+# [1] - number of movies + tv series per platform - [callback with date]    DONE
 # [2] - Box plot of distribution of duration of movies - [callback with listed_in]
 # [3] - Box plot of distribution of duration of tv series - [callback with listed_in] 
 # [4] - Difference between de release date and date addeed 
