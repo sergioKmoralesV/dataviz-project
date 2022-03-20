@@ -1,3 +1,5 @@
+from collections import defaultdict
+from email.policy import default
 import pandas as pd
 import plotly.express as px
 from dash import dash, dcc, html, Input, Output
@@ -105,9 +107,9 @@ def figure3():
     #alldata = pd.concat([hulu_mov, netf_mov])
 
     fig = go.Figure()
-    fig.add_trace(go.Box(y=hulu_mov['duration'], boxpoints='all', name='Hulu',
+    fig.add_trace(go.Box(y=hulu_mov['duration'],  name='Hulu', #boxpoints='all',
                     marker_color = 'indianred'))
-    fig.add_trace(go.Box(y=netf_mov['duration'], boxpoints='all',name='Netflix',
+    fig.add_trace(go.Box(y=netf_mov['duration'], name='Netflix',
                     marker_color = 'lightseagreen'))
     fig.update_layout(
         height=800,
@@ -158,6 +160,32 @@ def figure5(checklist):
         color_discrete_sequence=['lightseagreen'])
     return fig5
 
+
+################################################ Graph 6
+
+def figure6():
+    df = df_netf['country'].dropna()
+    
+    countries = {}
+
+    for x in df:
+        if ',' in x:
+            to_add = x.split(', ')
+            for country in to_add:
+                if country in countries:
+                    countries[country] += 1
+                else:
+                    countries[country] = 1
+        elif x in countries:
+            countries[x] += 1
+        else:
+            countries[x] = 1
+    
+    df_countries = pd.DataFrame.from_dict(countries, orient='index')
+    print(df_countries)
+        
+
+figure6()
 
 ################################################
 app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '12px 36px'}, children=[
@@ -224,3 +252,11 @@ if __name__ == '__main__':
 # [8] -
 # [9] - 
 # [10] - Comparison of movies between many platforms
+
+# NEW IDEAS
+# 1. copy past box plot with series
+# 2. distribution of rating in a treemap : different datasets
+# 3. top movies of rotten tomatoes depending on the platform
+# 4. contries of movies 
+# 5. listed in graph
+#
