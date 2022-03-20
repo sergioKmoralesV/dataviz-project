@@ -107,21 +107,55 @@ def figure3():
     #alldata = pd.concat([hulu_mov, netf_mov])
 
     fig = go.Figure()
-    fig.add_trace(go.Box(y=hulu_mov['duration'],  name='Hulu', #boxpoints='all',
-                    marker_color = 'indianred'))
+    fig.add_trace(go.Box(y=hulu_mov['duration'],  name='Hulu',
+                         marker_color='lightseagreen'))
     fig.add_trace(go.Box(y=netf_mov['duration'], name='Netflix',
-                    marker_color = 'lightseagreen'))
+                         marker_color='indianred'))
     fig.update_layout(
         height=800,
         width=1100,
         title_text='Hulu and Netflix movie lenght',
         yaxis_title='Minutes',
-        title_font_size = 18)
+        title_font_size=18)
 
     return fig
     #return px.box(alldata, x='dataset', y='duration', height=800, width=900, color='dataset')
 
+def figure3_series():
+
+    hulu_mov = df_hulu[['duration', 'type']].dropna()
+    hulu_mov = hulu_mov[hulu_mov['type'] == 'TV Show']
+    hulu_mov['duration'] = hulu_mov['duration'].str.replace(' Seasons', '')
+    hulu_mov['duration'] = hulu_mov['duration'].str.replace(' Season', '')
+    hulu_mov = hulu_mov.astype({'duration': 'int32'})
+    hulu_mov['dataset'] = 'Hulu'
+
+    netf_mov = df_netf[['duration', 'type']].dropna()
+    netf_mov = netf_mov[netf_mov['type'] == 'TV Show']
+    netf_mov['duration'] = netf_mov['duration'].str.replace(' Seasons', '')
+    netf_mov['duration'] = netf_mov['duration'].str.replace(' Season', '')
+    netf_mov = netf_mov.astype({'duration': 'int32'})
+    netf_mov = netf_mov[netf_mov['duration'] < 300]
+    netf_mov['dataset'] = 'Netflix'
+
+    #alldata = pd.concat([hulu_mov, netf_mov])
+
+    fig = go.Figure()
+    fig.add_trace(go.Box(y=hulu_mov['duration'],  name='Hulu',
+                         marker_color='lightseagreen'))
+    fig.add_trace(go.Box(y=netf_mov['duration'], name='Netflix',
+                         marker_color='indianred'))
+    fig.update_layout(
+        height=800,
+        width=1100,
+        title_text='Hulu and Netflix tv shows lenght',
+        yaxis_title='Seasons',
+        title_font_size=18)
+
+    return fig
+
 fig3 = figure3()
+fig3_series = figure3_series()
 
 ################################################ Graph 4 - Map ?? NOT FINISHED ONLY TEMPLATE HERE
 
@@ -159,7 +193,6 @@ def figure5(checklist):
         height=600,
         color_discrete_sequence=['lightseagreen'])
     return fig5
-
 
 ################################################ Graph 6
 
@@ -226,15 +259,17 @@ app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '12px 36px'}, child
         id='box-plot1',
         figure=fig3
     ),
-    
+    dcc.Graph(
+        id='box-plot2',
+        figure=fig3_series
+    ),
     dcc.Graph(
         id='rotten-tomatoes'
     ),
     dcc.Checklist(
     ['Netflix', 'Hulu', 'Prime Video', 'Disney+'],
-    ['Netflix', 'Hulu' ],
+    ['Netflix', 'Hulu'],
     id='checklist')
-
     ])
 
 
