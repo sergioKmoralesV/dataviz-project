@@ -135,20 +135,29 @@ def figure4():
 
 ################################################ Graph 5 not finished, callback to add
 
-def figure5():
+@app.callback(
+    Output('rotten-tomatoes', 'figure'),
+    Input('checklist', 'value'))
+def figure5(checklist):
     df_3rot = df_3.dropna(subset=['Rotten Tomatoes'])
-    x = 'Prime Video'
-    df_3rot = df_3rot[df_3rot[x] == 1]
+
+    df_3rot['sum'] = 0
+    for column in checklist:
+        df_3rot['sum'] += df_3rot[column]
+
+    df_3rot = df_3rot[df_3rot['sum'] > 0]
 
     df_3rot['Rotten Tomatoes'] = df_3rot['Rotten Tomatoes'].str.replace('/100', '')
 
-
     df_3rot = df_3rot.astype({'Rotten Tomatoes': 'int32'}).sort_values('Rotten Tomatoes')
     df_3rot = df_3rot.astype({'Rotten Tomatoes': 'str'})
-    fig5 = px.histogram(df_3rot, x='Rotten Tomatoes', title='Rotten Tomatoes score distribution of Movies on Streaming Platforms')
+
+    fig5 = px.histogram(df_3rot, x='Rotten Tomatoes',
+        title='Rotten Tomatoes score distribution of Movies on Streaming Platforms',
+        height=600,
+        color_discrete_sequence=['lightseagreen'])
     return fig5
 
-fig5 = figure5()
 
 ################################################
 app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '12px 36px'}, children=[
@@ -191,9 +200,13 @@ app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '12px 36px'}, child
     ),
     
     dcc.Graph(
-        id='rotten-tomatoes',
-        figure=fig5
-    )
+        id='rotten-tomatoes'
+    ),
+    dcc.Checklist(
+    ['Netflix', 'Hulu', 'Prime Video', 'Disney+'],
+    ['Netflix', 'Hulu' ],
+    id='checklist')
+
     ])
 
 
