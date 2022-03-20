@@ -53,7 +53,6 @@ def update_figure(start_year, end_year):
         xaxis_title='Year',
         yaxis_title='Count',
         height=600,
-        title_font_family='Lato',
         title_font_size = 18)
 
     fig.update_layout(transition_duration=500)
@@ -83,8 +82,7 @@ for i in range(0, len(g_by_age)):
         line=dict(color='crimson', width = 3))
 
 fig2.update_layout(title_text = 
-                   'Number of movies and tv series in each age category',
-                   title_font_size = 15)
+                   'Number of movies and tv series in each age category')
 
 
 ################################################ Graph 3 - Boxplot
@@ -101,17 +99,58 @@ def figure3():
     netf_mov = netf_mov[netf_mov['type'] == 'Movie']
     netf_mov['duration'] = netf_mov['duration'].str.replace(' min', '')
     netf_mov = netf_mov.astype({'duration': 'int32'})
+    netf_mov = netf_mov[netf_mov['duration'] < 300]
     netf_mov['dataset'] = 'Netflix'
 
-    alldata = pd.concat([hulu_mov, netf_mov])
+    #alldata = pd.concat([hulu_mov, netf_mov])
 
-    return px.box(alldata, x='dataset', y='duration', height=700, width=900)
+    fig = go.Figure()
+    fig.add_trace(go.Box(y=hulu_mov['duration'], boxpoints='all', name='Hulu',
+                    marker_color = 'indianred'))
+    fig.add_trace(go.Box(y=netf_mov['duration'], boxpoints='all',name='Netflix',
+                    marker_color = 'lightseagreen'))
+    fig.update_layout(
+        height=800,
+        width=1100,
+        title_text='Hulu and Netflix movie lenght',
+        yaxis_title='Minutes',
+        title_font_size = 18)
 
+    return fig
+    #return px.box(alldata, x='dataset', y='duration', height=800, width=900, color='dataset')
 
 fig3 = figure3()
 
-################################################
+################################################ Graph 4 - Map ?? NOT FINISHED ONLY TEMPLATE HERE
 
+def figure4():
+
+    g_by_rating = df.groupby(['rating']).size().reset_index(name='count')
+
+    fig3 = px.treemap(g_by_rating, path=['rating'], values='count', title='Rating distribution', height=600, width=1000)
+    fig3.update_layout(title_font_family='Lato')
+    fig3.update_traces(hovertemplate='rating: %{label}<br>count: %{value}<extra></extra>')
+    fig3.data[0].textinfo = 'label+value'
+
+
+################################################ Graph 5 not finished, callback to add
+
+def figure5():
+    df_3rot = df_3.dropna(subset=['Rotten Tomatoes'])
+    x = 'Prime Video'
+    df_3rot = df_3rot[df_3rot[x] == 1]
+
+    df_3rot['Rotten Tomatoes'] = df_3rot['Rotten Tomatoes'].str.replace('/100', '')
+
+
+    df_3rot = df_3rot.astype({'Rotten Tomatoes': 'int32'}).sort_values('Rotten Tomatoes')
+    df_3rot = df_3rot.astype({'Rotten Tomatoes': 'str'})
+    fig5 = px.histogram(df_3rot, x='Rotten Tomatoes', title='Rotten Tomatoes score distribution of Movies on Streaming Platforms')
+    return fig5
+
+fig5 = figure5()
+
+################################################
 app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '12px 36px'}, children=[
     html.H1(children='Hulu and Netflix Movies and TV Shows'),
 
@@ -149,6 +188,11 @@ app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '12px 36px'}, child
     dcc.Graph(
         id='box-plot1',
         figure=fig3
+    ),
+    
+    dcc.Graph(
+        id='rotten-tomatoes',
+        figure=fig5
     )
     ])
 
