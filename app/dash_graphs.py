@@ -363,6 +363,7 @@ def figure9(category):
     fig.update_layout(title_font_family='Lato',
                       xaxis_title='Platform',
                       yaxis_title='# content in category',
+                      title_text='Distribution of content by category - Netflix vs Hulu',
                       )
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=False)
