@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.express as px
 from dash import dash, dcc, html, Input, Output
 import plotly.graph_objs as go
+import pycountry
 
 app = dash.Dash(__name__)
 
@@ -39,7 +40,7 @@ def update_figure(start_year, end_year):
             x=list(g_by_release1.groups.keys()),
             y=values_years1,
             mode='markers+lines',
-            marker=dict(color='blue', size=6)
+            marker=dict(color='#1ce783', size=6)
         ),
         go.Scatter(
             name='Netflix',
@@ -50,12 +51,12 @@ def update_figure(start_year, end_year):
         )])
 
     fig.update_layout(
-        title_text='Hulu and Netflix releases of movies and tv shows by year',
-        xaxis_title='Year',
-        yaxis_title='Count',
+        title_text='Hulu vs Netflix releases of movies and tv shows by year',
+        xaxis_title='Year released',
+        yaxis_title='Total count of releases',
         height=600,
         title_font_size=18)
-
+    fig.update_layout(title_font_family='Lato')
     fig.update_layout(transition_duration=500)
 
     return fig
@@ -80,10 +81,15 @@ for i in range(0, len(g_by_age)):
                    x0=0, y0=i,
                    x1=g_by_age['count'][i],
                    y1=i,
-                   line=dict(color='crimson', width=3))
+                   line=dict(color='purple', width=3))
 
+fig2.update_layout(title_font_family='Lato')
 fig2.update_layout(title_text=
-                   'Number of movies and tv series in each age category')
+                   'Number of movies and tv series in each age category',
+                   xaxis_title='Count per category',
+                   yaxis_title='Age category',
+                   height=500,
+                   )
 
 
 ################################################ Graph 3 - Boxplot
@@ -106,18 +112,17 @@ def figure3():
 
     fig = go.Figure()
     fig.add_trace(go.Box(y=hulu_mov['duration'], name='Hulu',
-                         marker_color='lightseagreen'))
+                         marker_color='#1ce783'))
     fig.add_trace(go.Box(y=netf_mov['duration'], name='Netflix',
                          marker_color='indianred'))
     fig.update_layout(
-        height=800,
-        width=1100,
+        height=700,
         title_text='Hulu and Netflix movie lenght',
-        yaxis_title='Minutes',
+        yaxis_title='Duration in Minutes',
         title_font_size=18)
+    fig.update_layout(title_font_family='Lato')
 
     return fig
-    # return px.box(alldata, x='dataset', y='duration', height=800, width=900, color='dataset')
 
 
 def figure3_series():
@@ -136,37 +141,23 @@ def figure3_series():
     netf_mov = netf_mov[netf_mov['duration'] < 300]
     netf_mov['dataset'] = 'Netflix'
 
-    # alldata = pd.concat([hulu_mov, netf_mov])
-
     fig = go.Figure()
     fig.add_trace(go.Box(y=hulu_mov['duration'], name='Hulu',
-                         marker_color='lightseagreen'))
+                         marker_color='#1ce783'))
     fig.add_trace(go.Box(y=netf_mov['duration'], name='Netflix',
                          marker_color='indianred'))
     fig.update_layout(
-        height=800,
-        width=1100,
+        height=700,
         title_text='Hulu and Netflix tv shows lenght',
-        yaxis_title='Seasons',
+        yaxis_title='Duration in # Seasons',
         title_font_size=18)
+    fig.update_layout(title_font_family='Lato')
 
     return fig
 
 
 fig3 = figure3()
 fig3_series = figure3_series()
-
-
-################################################ Graph 4 - Map ?? NOT FINISHED ONLY TEMPLATE HERE
-
-def figure4():
-    g_by_rating = df.groupby(['rating']).size().reset_index(name='count')
-
-    fig3 = px.treemap(g_by_rating, path=['rating'], values='count', title='Rating distribution', height=600, width=1000)
-    fig3.update_layout(title_font_family='Lato')
-    fig3.update_traces(hovertemplate='rating: %{label}<br>count: %{value}<extra></extra>')
-    fig3.data[0].textinfo = 'label+value'
-
 
 ################################################ Graph 5 not finished, callback to add
 
@@ -187,14 +178,23 @@ def figure5(checklist):
     df_3rot = df_3rot.astype({'Rotten Tomatoes': 'int32'}).sort_values('Rotten Tomatoes')
     df_3rot = df_3rot.astype({'Rotten Tomatoes': 'str'})
 
-    fig5 = px.histogram(df_3rot, x='Rotten Tomatoes',
-                        title='Rotten Tomatoes score distribution of Movies on Streaming Platforms',
-                        height=600,
-                        color_discrete_sequence=['lightseagreen'])
+    fig5 = px.histogram(df_3rot, x='Rotten Tomatoes', labels={
+        'Rotten Tomatoes': 'Score of Rotten Tomatoes',
+    }, title='Rotten Tomatoes score distribution of Movies on Streaming Platforms', height=500)
+    fig5.update_layout(title_font_family='Lato', yaxis_title='Total count per score')
+    fig5.update_traces(hovertemplate='# Movies with score %{x} <br> Count: %{y}<extra></extra>')
     return fig5
 
 
 ################################################ Graph 6
+def fuzzySearch(country):
+    try:
+        result = pycountry.countries.search_fuzzy(country)
+    except Exception:
+        return None
+    else:
+        return result[0].alpha_3
+
 
 def figure6():
     df = df_netf['country'].dropna()
@@ -215,13 +215,54 @@ def figure6():
             countries[x] = 1
 
     df_countries = pd.DataFrame.from_dict(countries, orient='index')
-    print(df_countries)
+    df_countries['iso'] = [fuzzySearch(country) for country in df_countries.index]
+    df_countries_filtered = df_countries.dropna(subset=['iso'])
+
+    df_countries_filtered.reset_index(inplace=True)
+    df_countries_filtered = df_countries_filtered.rename({0: 'total_count'}, axis=1)
+    fig6 = px.choropleth(df_countries_filtered, locations="iso", hover_name='index', color='total_count',
+                         color_continuous_scale=px.colors.sequential.Oryel, title='Netflix - Country filmed')
+    fig6.update_layout(title_font_family='Lato')
+    return fig6
 
 
-figure6()
+f6 = figure6()
 
+
+def figure6_hulu():
+    df = df_hulu['country'].dropna()
+
+    countries = {}
+
+    for x in df:
+        if ',' in x:
+            to_add = x.split(', ')
+            for country in to_add:
+                if country in countries:
+                    countries[country] += 1
+                else:
+                    countries[country] = 1
+        elif x in countries:
+            countries[x] += 1
+        else:
+            countries[x] = 1
+
+    df_countries = pd.DataFrame.from_dict(countries, orient='index')
+    df_countries['iso'] = [fuzzySearch(country) for country in df_countries.index]
+    df_countries_filtered = df_countries.dropna(subset=['iso'])
+
+    df_countries_filtered.reset_index(inplace=True)
+    df_countries_filtered = df_countries_filtered.rename({0: 'total_count'}, axis=1)
+    fig6 = px.choropleth(df_countries_filtered, locations="iso", hover_name='index', color='total_count',
+                         color_continuous_scale=px.colors.sequential.Tealgrn, title='Hulu - Country filmed')
+    fig6.update_layout(title_font_family='Lato')
+    return fig6
+
+
+f6_hulu = figure6_hulu()
 
 ################################################ Graph 7 - Rating distribution
+
 
 def figure7():
     net_filtered_ratings = df_netf[~df_netf["rating"].str.contains('min', na=False)]
@@ -230,18 +271,21 @@ def figure7():
     hulu_filtered_ratings = df_hulu[~df_hulu["rating"].str.contains('min', na=False)]
     hulu_filtered_ratings = hulu_filtered_ratings[~hulu_filtered_ratings['rating'].str.contains('Season', na=False)]
 
-    netflix_ratings = net_filtered_ratings.dropna(subset=['rating']).groupby(['rating']).size().reset_index(name='count')
+    netflix_ratings = net_filtered_ratings.dropna(subset=['rating']).groupby(['rating']).size().reset_index(
+        name='count')
     hulu_ratings = hulu_filtered_ratings.dropna(subset=['rating']).groupby(['rating']).size().reset_index(name='count')
 
     fig7_net = px.treemap(netflix_ratings, path=['rating'], values='count', title='Rating distribution - Netflix',
                           height=600, width=1000)
-    # fig7_net.update_traces(hovertemplate='rating: %{label}<br>count: %{value}<extra></extra>')
-    fig7_net.data[0].textinfo = 'label+value'
+    fig7_net.update_layout(title_font_family='Lato')
+    fig7_net.update_traces(hovertemplate='Rating: %{label}<br>Count: %{value}<extra></extra>')
+    fig7_net.data[0].textinfo = 'label'
 
     fig7_hulu = px.treemap(hulu_ratings, path=['rating'], values='count', title='Rating distribution - Hulu',
                            height=600, width=1000)
-    # fig7_hulu.update_traces(hovertemplate='rating: %{label}<br>count: %{value}<extra></extra>')
-    fig7_hulu.data[0].textinfo = 'label+value'
+    fig7_hulu.update_layout(title_font_family='Lato')
+    fig7_hulu.update_traces(hovertemplate='Rating: %{label}<br>Count: %{value}<extra></extra>')
+    fig7_hulu.data[0].textinfo = 'label'
 
     return fig7_net, fig7_hulu
 
@@ -249,83 +293,95 @@ def figure7():
 f7_netflix, f7_hulu = figure7()
 
 ################################################
-app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '12px 36px'}, children=[
-    html.H1(children='Hulu and Netflix Movies and TV Shows'),
-
+app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '36px'}, children=[
+    html.H1(children='Streaming Movies and TV Shows', style={'textAlign': 'center'}),
     html.Div([
         html.Div([
-            "Starting Year: ",
-            dcc.Dropdown(list(g_by_release.groups.keys()), 1923, id='start_y')
-        ],
-            style={
-                "width": "25%",
-            },
+            html.Div([
+                html.H4(children='Select the platforms to filter', style={'textAlign': 'center'}),
+                html.Div([
+                    dcc.Checklist(
+                        ['Netflix', 'Hulu', 'Prime Video', 'Disney+'],
+                        ['Netflix', 'Hulu'],
+                        id='checklist', style={'width': '100%', 'display': 'flex', 'justifyContent': 'space-around'}),
+                ], style={'width': '50%', 'margin': '0 25% 0 25%'}),
+                dcc.Graph(
+                    id='rotten-tomatoes',
+                ),
+            ], style={'margin': '0 0 20px 0', 'width': '50%', 'alignItems': 'center'}),
+            dcc.Graph(
+                id='age-distribution',
+                figure=fig2,
+                style={'width': '50%'}
+            ),
+        ], style={'display': 'flex', 'flexDirection': 'row'}),
+        html.H2(children='Now, we will evaluate Hulu vs Netflix', style={'textAlign': 'center'}),
+        html.Div([
+            html.Div([
+                "Starting Year: ",
+                dcc.Dropdown(list(g_by_release.groups.keys()), 1923, id='start_y', style={'marginTop': 10})
+            ],
+                style={
+                    "width": "25%",
+                },
+            ),
+            html.Div([
+                "End Year: ",
+                dcc.Dropdown(list(g_by_release.groups.keys()), 2021, id='end_y', style={'marginTop': 10})
+            ],
+                style={
+                    "width": "25%"
+                },
+            ),
+        ], style={'display': 'flex', 'flexDirection': 'row', 'justifyContent': 'space-around',
+                  'width': '50%', 'margin': '0 25% 0 25%'}),
+        dcc.Graph(
+            id='content-release-date'
         ),
         html.Div([
-            "End Year: ",
-            dcc.Dropdown(list(g_by_release.groups.keys()), 2021, id='end_y')
-        ],
-            style={
-                "width": "25%"
-            },
-        )]
+            dcc.Graph(
+                id='map_distribution',
+                figure=f6,
+                style={'width': '50%'}
+            ),
+            dcc.Graph(
+                id='map_distribution_hulu',
+                figure=f6_hulu,
+                style={'width': '50%'}
+            ),
+        ], style={'display': 'flex', 'flexDirection': 'row'}),
+        html.Div([
+            dcc.Graph(
+                id='box-plot1',
+                figure=fig3,
+                style={'width': '50%'}
+            ),
+            dcc.Graph(
+                id='box-plot2',
+                figure=fig3_series,
+                style={'width': '50%'}
+            ),
+        ], style={'display': 'flex', 'flexDirection': 'row'}),
+        html.Div([
+            dcc.Graph(
+                id='rating_netflix',
+                figure=f7_netflix,
+                style={'width': '50%'}
+            ),
+            dcc.Graph(
+                id='rating_hulu',
+                figure=f7_hulu,
+                style={'width': '50%'}
+            ),
+        ], style={'display': 'flex', 'flexDirection': 'row'}),
+    ]
         , style={
             "display": "flex",
             "justifyContent": "space-around",
             "fontWeight": "600",
+            "flexDirection": 'column',
         }),
-    dcc.Graph(
-        id='content-release-date'
-    ),
-
-    dcc.Graph(
-        id='age-distribution',
-        figure=fig2
-    ),
-
-    dcc.Graph(
-        id='box-plot1',
-        figure=fig3
-    ),
-    dcc.Graph(
-        id='box-plot2',
-        figure=fig3_series
-    ),
-    dcc.Graph(
-        id='rotten-tomatoes'
-    ),
-    dcc.Checklist(
-        ['Netflix', 'Hulu', 'Prime Video', 'Disney+'],
-        ['Netflix', 'Hulu'],
-        id='checklist'),
-    dcc.Graph(
-        id='rating_netflix',
-        figure=f7_netflix
-    ),
-    dcc.Graph(
-        id='rating_hulu',
-        figure=f7_hulu
-    ),
 ])
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-
-# [1] - number of movies + tv series per platform - [callback with date]    DONE
-# [2] - Box plot of distribution of duration of movies - [callback with listed_in]
-# [3] - Box plot of distribution of duration of tv series - [callback with listed_in] 
-# [4] - Difference between de release date and date addeed 
-# [5] - Movies/tv series counting [map]
-# [6] - 
-# [7] - 
-# [8] -
-# [9] - 
-# [10] - Comparison of movies between many platforms
-
-# NEW IDEAS
-# 1. copy past box plot with series
-# 2. distribution of rating in a treemap : different datasets
-# 3. top movies of rotten tomatoes depending on the platform
-# 4. contries of movies 
-# 5. listed in graph
-#
