@@ -278,13 +278,13 @@ def figure7():
     hulu_ratings = hulu_filtered_ratings.dropna(subset=['rating']).groupby(['rating']).size().reset_index(name='count')
 
     fig7_net = px.treemap(netflix_ratings, path=['rating'], values='count', title='Netflix - Rating distribution',
-                          height=600, width=1000)
+                          height=700)
     fig7_net.update_layout(title_font_family='Lato')
     fig7_net.update_traces(hovertemplate='Rating: %{label}<br>Count: %{value}<extra></extra>')
     fig7_net.data[0].textinfo = 'label'
 
     fig7_hulu = px.treemap(hulu_ratings, path=['rating'], values='count', title='Hulu - Rating distribution',
-                           height=600, width=1000)
+                           height=700)
     fig7_hulu.update_layout(title_font_family='Lato')
     fig7_hulu.update_traces(hovertemplate='Rating: %{label}<br>Count: %{value}<extra></extra>')
     fig7_hulu.data[0].textinfo = 'label'
