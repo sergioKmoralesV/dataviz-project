@@ -372,6 +372,7 @@ def figure9(category):
 ################################################
 app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '36px'}, children=[
     html.H1(children='Streaming Movies and TV Shows', style={'textAlign': 'center'}),
+    html.H4(children='by Mateusz Sledz and Sergio Morales', style={'textAlign': 'center', 'fontStyle': 'italic', 'fontWeight': 500,}),
     html.Div([
         html.Div([
             html.Div([
