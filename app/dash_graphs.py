@@ -161,6 +161,7 @@ def figure3_series():
 fig3 = figure3()
 fig3_series = figure3_series()
 
+
 ################################################ Graph 5 not finished, callback to add
 
 @app.callback(
@@ -222,7 +223,7 @@ def figure6():
 
     df_countries_filtered.reset_index(inplace=True)
     df_countries_filtered = df_countries_filtered.rename({0: 'total_count'}, axis=1)
-    fig6 = px.choropleth(df_countries_filtered, locations="iso", hover_name='index', color='total_count',
+    fig6 = px.choropleth(df_countries_filtered, locations='iso', hover_name='index', color='total_count',
                          color_continuous_scale=px.colors.sequential.Oryel, title='Netflix - Country filmed')
     fig6.update_layout(title_font_family='Lato')
     return fig6
@@ -255,7 +256,7 @@ def figure6_hulu():
 
     df_countries_filtered.reset_index(inplace=True)
     df_countries_filtered = df_countries_filtered.rename({0: 'total_count'}, axis=1)
-    fig6 = px.choropleth(df_countries_filtered, locations="iso", hover_name='index', color='total_count',
+    fig6 = px.choropleth(df_countries_filtered, locations='iso', hover_name='index', color='total_count',
                          color_continuous_scale=px.colors.sequential.Tealgrn, title='Hulu - Country filmed')
     fig6.update_layout(title_font_family='Lato')
     return fig6
@@ -263,14 +264,15 @@ def figure6_hulu():
 
 f6_hulu = figure6_hulu()
 
+
 ################################################ Graph 7 - Rating distribution
 
 
 def figure7():
-    net_filtered_ratings = df_netf[~df_netf["rating"].str.contains('min', na=False)]
+    net_filtered_ratings = df_netf[~df_netf['rating'].str.contains('min', na=False)]
     net_filtered_ratings = net_filtered_ratings[~net_filtered_ratings['rating'].str.contains('Season', na=False)]
 
-    hulu_filtered_ratings = df_hulu[~df_hulu["rating"].str.contains('min', na=False)]
+    hulu_filtered_ratings = df_hulu[~df_hulu['rating'].str.contains('min', na=False)]
     hulu_filtered_ratings = hulu_filtered_ratings[~hulu_filtered_ratings['rating'].str.contains('Season', na=False)]
 
     netflix_ratings = net_filtered_ratings.dropna(subset=['rating']).groupby(['rating']).size().reset_index(
@@ -294,28 +296,34 @@ def figure7():
 
 f7_netflix, f7_hulu = figure7()
 
+
 ################################################ Bubble Graph
 
 @app.callback(
     Output('bubble-plot', 'figure'),
     Input('platform', 'value'))
 def figure8(platform):
-    net_filtered_ratings = df_netf[~df_netf["rating"].str.contains('min', na=False)]
+    net_filtered_ratings = df_netf[~df_netf['rating'].str.contains('min', na=False)]
     net_filtered_ratings = net_filtered_ratings[~net_filtered_ratings['rating'].str.contains('Season', na=False)]
 
-    hulu_filtered_ratings = df_hulu[~df_hulu["rating"].str.contains('min', na=False)]
+    hulu_filtered_ratings = df_hulu[~df_hulu['rating'].str.contains('min', na=False)]
     hulu_filtered_ratings = hulu_filtered_ratings[~hulu_filtered_ratings['rating'].str.contains('Season', na=False)]
 
     netflix_ratings = net_filtered_ratings.dropna(subset=['rating']).groupby(['rating']).size().reset_index(
         name='count')
     hulu_ratings = hulu_filtered_ratings.dropna(subset=['rating']).groupby(['rating']).size().reset_index(name='count')
-
+    fig = None
     if platform == 'Netflix':
-        return px.scatter(netflix_ratings, x="rating", y="count",
-	         size="count", color="rating",  size_max=60, title='Rating distribution in different form')
+        fig = px.scatter(netflix_ratings, x='rating', y='count',
+                         size='count', color='rating', size_max=60, title='Rating distribution in different form')
     elif platform == 'Hulu':
-        return px.scatter(hulu_ratings, x="rating", y="count",
-	         size="count", color="rating",  size_max=60, title='Rating distribution in different form')
+        fig = px.scatter(hulu_ratings, x='rating', y='count',
+                         size='count', color='rating', size_max=60, title='Rating distribution in different form')
+
+    fig.update_layout(title_font_family='Lato',
+                      xaxis_title='Rating',
+                      yaxis_title='# content per rating')
+    return fig
 
 
 ################################################
@@ -344,19 +352,19 @@ app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '36px'}, children=[
         html.H2(children='Now, we will evaluate Hulu vs Netflix', style={'textAlign': 'center'}),
         html.Div([
             html.Div([
-                "Starting Year: ",
+                'Starting Year: ',
                 dcc.Dropdown(list(g_by_release.groups.keys()), 1923, id='start_y', style={'marginTop': 10})
             ],
                 style={
-                    "width": "25%",
+                    'width': '25%',
                 },
             ),
             html.Div([
-                "End Year: ",
+                'End Year: ',
                 dcc.Dropdown(list(g_by_release.groups.keys()), 2021, id='end_y', style={'marginTop': 10})
             ],
                 style={
-                    "width": "25%"
+                    'width': '25%'
                 },
             ),
         ], style={'display': 'flex', 'flexDirection': 'row', 'justifyContent': 'space-around',
@@ -402,24 +410,24 @@ app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '36px'}, children=[
         ], style={'display': 'flex', 'flexDirection': 'row'}),
     ]
         , style={
-            "display": "flex",
-            "justifyContent": "space-around",
-            "fontWeight": "600",
-            "flexDirection": 'column',
+            'display': 'flex',
+            'justifyContent': 'space-around',
+            'fontWeight': '600',
+            'flexDirection': 'column',
         }),
 
-        dcc.Graph(
+    dcc.Graph(
         id='bubble-plot'),
 
-        html.Div([
-            "Platform: ",
-            dcc.Dropdown(['Netflix', 'Hulu'], 'Netflix', id='platform', style={'marginTop': 10})
-        ],
+    html.Div([
+        html.H4(children='Platform: ', style={'textAlign': 'center'}),
+        dcc.Dropdown(['Netflix', 'Hulu'], 'Netflix', id='platform', style={'marginTop': 10})
+    ],
         style={
-                'width': '20%',
-                'paddingBottom': 40
-                })
+            'width': '20%',
+            'padding': '0 40% 40px 40%',
+        })
 ])
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
