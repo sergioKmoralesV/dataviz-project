@@ -5,6 +5,7 @@ import plotly.express as px
 from dash import dash, dcc, html, Input, Output
 import plotly.graph_objs as go
 import pycountry
+import numpy as np
 
 app = dash.Dash(__name__)
 
@@ -47,7 +48,7 @@ def update_figure(start_year, end_year):
             x=list(g_by_release2.groups.keys()),
             y=values_years2,
             mode='markers+lines',
-            marker=dict(color='red', size=6)
+            marker=dict(color='#E50914', size=6)
         )])
 
     fig.update_layout(
@@ -326,6 +327,48 @@ def figure8(platform):
     return fig
 
 
+################################################ Bubble Graph - listed in
+listed_categories_netflix = pd.unique(df_netf['listed_in'].str.split(', ', expand=True).stack())
+listed_categories_hulu = pd.unique(df_hulu['listed_in'].str.split(', ', expand=True).stack())
+listed_categories_merged = np.unique(np.concatenate((listed_categories_hulu, listed_categories_netflix)))
+
+
+@app.callback(
+    Output('listed_in_bubble', 'figure'),
+    Input('category', 'value'))
+def figure9(category):
+    net_filtered_cat = df_netf[df_netf['listed_in'].str.contains(category, na=False)]
+    hulu_filtered_cat = df_hulu[df_hulu['listed_in'].str.contains(category, na=False)]
+
+    net_val = len(net_filtered_cat['listed_in'])
+    hulu_val = len(hulu_filtered_cat['listed_in'])
+    max_val = np.max([net_val, hulu_val])
+
+    fig = go.Figure([
+        go.Scatter(
+            name='Netflix',
+            x=['Netflix'],
+            y=[net_val],
+            mode='markers',
+            marker=dict(color='#E50914', size=(net_val / max_val) * 100, opacity=0.7)
+        ),
+        go.Scatter(
+            name='Hulu',
+            x=['Hulu'],
+            y=[hulu_val],
+            mode='markers',
+            marker=dict(color='#1ce783', size=(hulu_val / max_val) * 100, opacity=0.7)
+        ),
+    ])
+    fig.update_layout(title_font_family='Lato',
+                      xaxis_title='Platform',
+                      yaxis_title='# content in category',
+                      )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+    return fig
+
+
 ################################################
 app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '36px'}, children=[
     html.H1(children='Streaming Movies and TV Shows', style={'textAlign': 'center'}),
@@ -416,18 +459,31 @@ app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '36px'}, children=[
             'flexDirection': 'column',
         }),
 
+    html.Div([
+        html.H4(children='Select the platform: ', style={'textAlign': 'center'}),
+        dcc.Dropdown(['Netflix', 'Hulu'], 'Netflix', id='platform', style={'marginTop': 10})
+    ], style={
+        'width': '20%',
+        'padding': '0 40%',
+    }),
     dcc.Graph(
         id='bubble-plot'),
-
     html.Div([
-        html.H4(children='Platform: ', style={'textAlign': 'center'}),
-        dcc.Dropdown(['Netflix', 'Hulu'], 'Netflix', id='platform', style={'marginTop': 10})
-    ],
-        style={
-            'width': '20%',
-            'padding': '0 40% 40px 40%',
-        })
+        html.H4(children='Select the Category: ', style={'textAlign': 'center'}),
+        dcc.Dropdown(listed_categories_merged, listed_categories_merged[0], id='category', style={'marginTop': 10})
+    ], style={
+        'width': '20%',
+        'padding': '0 40%',
+    }),
+    html.Div([
+        dcc.Graph(
+            id='listed_in_bubble',
+        ),
+    ], style={'width': '50%',
+              'padding': '0 25%'
+              }),
+
 ])
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
