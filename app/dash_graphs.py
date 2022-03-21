@@ -292,6 +292,30 @@ def figure7():
 
 f7_netflix, f7_hulu = figure7()
 
+################################################ Bubble Graph
+
+@app.callback(
+    Output('bubble-plot', 'figure'),
+    Input('platform', 'value'))
+def figure8(platform):
+    net_filtered_ratings = df_netf[~df_netf["rating"].str.contains('min', na=False)]
+    net_filtered_ratings = net_filtered_ratings[~net_filtered_ratings['rating'].str.contains('Season', na=False)]
+
+    hulu_filtered_ratings = df_hulu[~df_hulu["rating"].str.contains('min', na=False)]
+    hulu_filtered_ratings = hulu_filtered_ratings[~hulu_filtered_ratings['rating'].str.contains('Season', na=False)]
+
+    netflix_ratings = net_filtered_ratings.dropna(subset=['rating']).groupby(['rating']).size().reset_index(
+        name='count')
+    hulu_ratings = hulu_filtered_ratings.dropna(subset=['rating']).groupby(['rating']).size().reset_index(name='count')
+
+    if platform == 'Netflix':
+        return px.scatter(netflix_ratings, x="rating", y="count",
+	         size="count", color="rating",  size_max=60, title='Rating distribution in different form')
+    elif platform == 'Hulu':
+        return px.scatter(hulu_ratings, x="rating", y="count",
+	         size="count", color="rating",  size_max=60, title='Rating distribution in different form')
+
+
 ################################################
 app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '36px'}, children=[
     html.H1(children='Streaming Movies and TV Shows', style={'textAlign': 'center'}),
@@ -381,6 +405,18 @@ app.layout = html.Div(style={'fontFamily': 'Lato', 'margin': '36px'}, children=[
             "fontWeight": "600",
             "flexDirection": 'column',
         }),
+
+        dcc.Graph(
+        id='bubble-plot'),
+
+        html.Div([
+            "Platform: ",
+            dcc.Dropdown(['Netflix', 'Hulu'], 'Netflix', id='platform', style={'marginTop': 10})
+        ],
+        style={
+                'width': '20%',
+                'paddingBottom': 40
+                })
 ])
 
 if __name__ == '__main__':
